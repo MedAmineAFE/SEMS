@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Énergétique V3.0 | Système de Gestion Intelligente</title>
+    
+    <!-- ===== LIBRARY SCRIPTS (HEAD SECTION) ===== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- EMAILJS - CRUCIAL FIX -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #4a5568;
+            --accent-green: #48bb78;
+            --accent-emerald: #38b2ac;
+            --accent-red: #f56565;
+            --accent-orange: #ed8936;
+            --accent-purple: #9f7aea;
+            --text-primary: #cbd5e0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --mode-color: var(--accent-emerald);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #0f1419 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            padding: 2rem 2rem;
+            border-bottom: 2px solid var(--mode-color);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(56, 178, 172, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .header-left {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Toggle Switch */
+        .mode-switch {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem 1.2rem;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-checkbox {
+            display: none;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: var(--accent-emerald);
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s ease;
+        }
+
+        .toggle-checkbox:checked + .toggle-switch {
+            background: var(--accent-purple);
+        }
+
+        .toggle-checkbox:checked + .toggle-switch::after {
+            left: 24px;
+        }
+
+        .mode-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Premium Buttons */
+        .btn-group {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        button, .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-emerald), var(--accent-green));
+            color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(56, 178, 172, 0.1);
+            color: var(--accent-emerald);
+            border: 1px solid var(--accent-emerald);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(56, 178, 172, 0.2);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid var(--accent-green);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Notification Bell */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .notification-bell:hover {
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: none;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Alarm Banner */
+        .alarm-banner {
+            background: linear-gradient(135deg, var(--accent-red) 0%, var(--accent-orange) 100%);
+            border-left: 5px solid white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 20px rgba(245, 101, 101, 0.3);
+        }
+
+        .alarm-banner.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alarm-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .alarm-message {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* KPI Cards Section */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .kpi-card:hover {
+            border-color: var(--mode-color);
+            box-shadow: 0 0 30px rgba(56, 178, 172, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--mode-color), transparent);
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+            color: var(--mode-color);
+        }
+
+        .kpi-unit {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.3rem;
+        }
+
+        .kpi-icon {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 2.5rem;
+            opacity: 0.1;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-sm);
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--mode-color), var(--accent-emerald));
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 1rem;
+        }
+
+        /* Gauge Section */
+        .gauge-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .gauge-card {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .gauge-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .digital-display {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--mode-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--mode-color);
+            text-shadow: 0 0 10px rgba(56, 178, 172, 0.5);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-time {
+            font-size: 0.8rem;
+            color: var(--mode-color);
+            font-family: 'Courier New', monospace;
+            margin-top: 0.5rem;
+        }
+
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 80px;
+            gap: 0.3rem;
+            margin-top: 1rem;
+            padding: 1rem 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .bar {
+            width: 4px;
+            background: var(--mode-color);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+
+        /* Compliance Table */
+        .compliance-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(56, 178, 172, 0.1);
+            border-bottom: 2px solid var(--border-color);
+            padding: 1.2rem;
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--mode-color);
+        }
+
+        td {
+            padding: 1.2rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:hover {
+            background: rgba(56, 178, 172, 0.05);
+        }
+
+        .checkmark {
+            color: var(--accent-green);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .cross {
+            color: var(--accent-red);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            transform: scale(1.2);
+        }
+
+        .alert-item {
+            background: rgba(245, 101, 101, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .alert-text {
+            color: var(--text-primary);
+            margin-top: 0.3rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(56, 178, 172, 0.5); }
+            50% { text-shadow: 0 0 20px rgba(56, 178, 172, 0.8); }
+        }
+
+        .glow {
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        /* Mode-specific colors */
+        .mode-building {
+            --mode-color: var(--accent-emerald);
+        }
+
+        .mode-industry {
+            --mode-color: var(--accent-purple);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .kpi-section {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header mode-building">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>⚡ Tableau de Bord Énergétique V3.0</h1>
+                <p class="header-subtitle">Système de Gestion Intelligente | Suivi en Temps Réel</p>
+            </div>
+            <div class="header-controls">
+                <div class="mode-switch">
+                    <span class="mode-label">Mode :</span>
+                    <input type="checkbox" id="modeToggle" class="toggle-checkbox">
+                    <label for="modeToggle" class="toggle-switch"></label>
+                    <div class="mode-text" id="modeText">🏢 Bâtiment</div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="uploadBtn" title="Importer données Excel">
+                        📂 Importer Données
+                    </button>
+                    <button class="btn btn-secondary" id="reportBtn" title="Générer rapport audit">
+                        📄 Rapport
+                    </button>
+                    <div class="notification-bell" id="notificationBell" title="Voir alertes">
+                        🔔
+                        <span class="notification-badge" id="notificationBadge">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="statusText">Système Prêt</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" accept=".xlsx,.xls" />
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Alarm Banner -->
+        <div class="alarm-banner" id="alarmBanner">
+            <div class="alarm-title">🚨 ALERTE CRITIQUE DÉCLENCHÉE</div>
+            <div class="alarm-message" id="alarmMessage">Dépassement de puissance détecté. Attention immédiate requise.</div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-text">Aucune donnée chargée</div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Cliquez sur "📂 Importer Données" pour importer vos fichiers de mesure et commencer le suivi</p>
+        </div>
+
+        <!-- Dashboard Content (Hidden until data is loaded) -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- KPI Cards -->
+            <div class="kpi-section">
+                <div class="kpi-card">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-label">Énergie Économisée</div>
+                    <div class="kpi-value" id="kpi-savings">--</div>
+                    <div class="kpi-unit">% d'économies réalisées</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">📈</div>
+                    <div class="kpi-label">Réduction de Puissance</div>
+                    <div class="kpi-value" id="kpi-peak">--</div>
+                    <div class="kpi-unit">kW économisés en pic</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">🌱</div>
+                    <div class="kpi-label">Impact CO₂</div>
+                    <div class="kpi-value" id="kpi-co2">--</div>
+                    <div class="kpi-unit">kg CO₂ évitées</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">💰</div>
+                    <div class="kpi-label">Gain Financier</div>
+                    <div class="kpi-value" id="kpi-financial">--</div>
+                    <div class="kpi-unit">DH économisés</div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">Profil Énergétique 24h - Comparaison Avant/Après</h2>
+                <div class="chart-container">
+                    <canvas id="energyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Live Gauge Section -->
+            <div class="gauge-section">
+                <div class="gauge-card">
+                    <div class="gauge-label">Compteur Traditionnel (Avant)</div>
+                    <div class="digital-display" id="baseline-display">0.0 kW</div>
+                    <div class="gauge-time" id="baseline-time">00:00</div>
+                    <div class="mini-chart" id="baseline-bars"></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="gauge-label">Compteur Intelligent (Après)</div>
+                    <div class="digital-display glow" id="optimized-display">0.0 kW</div>
+                    <div class="gauge-time" id="optimized-time">00:00</div>
+                    <div class="mini-chart" id="optimized-bars"></div>
+                </div>
+
+                <div class="gauge-card">
+                    <div class="gauge-label">Économies en Temps Réel</div>
+                    <div class="digital-display" id="savings-display" style="font-size: 1.5rem;">0.0 kW</div>
+                    <div class="gauge-time">Différence Instantanée</div>
+                    <div class="mini-chart" id="savings-bars"></div>
+                </div>
+            </div>
+
+            <!-- Compliance Table -->
+            <div class="compliance-section">
+                <h2 class="section-title">Métriques de Performance : Objectifs vs Réalités</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Indicateur</th>
+                                <th>Objectif</th>
+                                <th>Valeur Réelle</th>
+                                <th>Statut</th>
+                                <th>Conformité</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Réduction Consommation</td>
+                                <td>15% Réduction</td>
+                                <td id="table-consumption">--</td>
+                                <td>↓ Réduite</td>
+                                <td><span class="checkmark">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Puissance Maximale</td>
+                                <td id="table-threshold">< 100 kW</td>
+                                <td id="table-peak">--</td>
+                                <td>↓ Réduite</td>
+                                <td id="peak-compliance"><span class="checkmark">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Facteur de Puissance</td>
+                                <td>> 0.90</td>
+                                <td id="table-pf">--</td>
+                                <td>↑ Amélioré</td>
+                                <td id="pf-compliance"><span class="checkmark">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Couverture Surveillance</td>
+                                <td>100%</td>
+                                <td>100%</td>
+                                <td>✓ Complète</td>
+                                <td><span class="checkmark">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td>Enregistrement Données</td>
+                                <td>24/7 Activé</td>
+                                <td>24/7 Actif</td>
+                                <td>✓ Actif</td>
+                                <td><span class="checkmark">✓</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📢 Centre des Notifications</h2>
+                <button class="modal-close" onclick="closeNotificationModal()">&times;</button>
+            </div>
+            <div id="notificationList">
+                <p style="color: var(--text-secondary);">Aucune alerte pour le moment</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Tableau de Bord Énergétique V3.0 | Système Professionnel de Gestion | Analyse Intelligente des Charges</p>
+    </div>
+
+    <script>
+        // ========== EMAILJS INITIALIZATION (IMMEDIATE - CRITICAL) ==========
+        (function(){
+            emailjs.init("EvngTv0aGRYN-t8rF");
+            console.log("✅ EmailJS initialized successfully");
+        })();
+
+        // ========== EMAILJS CONFIG ==========
+        const EMAILJS_CONFIG = {
+            serviceID: "service_dpavr7f",
+            templateID: "template_6ye9uqr"
+        };
+
+        // ========== GLOBAL VARIABLES ==========
+        let energyData = [];
+        let currentMode = 'building';
+        let currentHourIndex = 0;
+        let alarmLog = [];
+        let chart = null;
+
+        const THRESHOLDS = {
+            building: { powerLimit: 100, pfLimit: 0.90, nightStartHour: 0, nightEndHour: 6 },
+            industry: { powerLimit: 500, pfLimit: 0.90 }
+        };
+
+        // ========== MODE TOGGLE ==========
+        document.getElementById('modeToggle').addEventListener('change', function() {
+            currentMode = this.checked ? 'industry' : 'building';
+            const modeText = currentMode === 'building' ? '🏢 Bâtiment' : '🏭 Industrie';
+            document.getElementById('modeText').textContent = modeText;
+
+            const header = document.querySelector('.header');
+            header.classList.remove('mode-building', 'mode-industry');
+            header.classList.add(currentMode === 'building' ? 'mode-building' : 'mode-industry');
+
+            const threshold = THRESHOLDS[currentMode].powerLimit;
+            document.getElementById('table-threshold').textContent = `< ${threshold} kW`;
+
+            if (energyData.length > 0) {
+                checkAlarms();
+            }
+        });
+
+        // ========== FILE UPLOAD & EXCEL PARSING ==========
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    energyData = jsonData.map(row => {
+                        let timeStr = row['Time'] || row['time'] || '00:00';
+                        
+                        if (typeof timeStr === 'number') {
+                            const hours = Math.floor(timeStr * 24);
+                            const minutes = Math.floor((timeStr * 24 - hours) * 60);
+                            timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                        } else {
+                            timeStr = String(timeStr).trim();
+                        }
+
+                        return {
+                            time: timeStr,
+                            p_before: parseFloat(row['P_Before']) || 0,
+                            p_after: parseFloat(row['P_After']) || 0,
+                            q_before: parseFloat(row['Q_Before']) || 0,
+                            q_after: parseFloat(row['Q_After']) || 0
+                        };
+                    });
+
+                    if (energyData.length === 0) {
+                        throw new Error('Aucune donnée valide trouvée');
+                    }
+
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('dashboardContent').style.display = 'block';
+
+                    updateDashboard();
+                    checkAlarms();
+
+                    Swal.fire({
+                        title: 'Succès !',
+                        text: `${energyData.length} points de données chargés avec succès`,
+                        icon: 'success',
+                        background: '#2d3748',
+                        color: '#cbd5e0',
+                        confirmButtonColor: '#48bb78'
+                    });
+
+                } catch (error) {
+                    console.error('Parse error:', error);
+                    Swal.fire({
+                        title: 'Erreur !',
+                        text: `Échec du chargement : ${error.message}\n\nColonnes requises (sensibles à la casse) : Time, P_Before, P_After, Q_Before, Q_After`,
+                        icon: 'error',
+                        background: '#2d3748',
+                        color: '#cbd5e0',
+                        confirmButtonColor: '#f56565'
+                    });
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ========== UTILITY FUNCTIONS ==========
+        function calculateCosPhi(p, q) {
+            if (p === 0) return 1;
+            const result = p / Math.sqrt(p * p + q * q);
+            return Math.min(1, Math.max(0, result));
+        }
+
+        function calculateKPIs() {
+            const totalBefore = energyData.reduce((sum, d) => sum + d.p_before, 0);
+            const totalAfter = energyData.reduce((sum, d) => sum + d.p_after, 0);
+            const savingsPercent = totalBefore > 0 ? ((totalBefore - totalAfter) / totalBefore * 100).toFixed(1) : 0;
+
+            const totalKwhSaved = totalBefore - totalAfter;
+            const co2Saved = (totalKwhSaved * 0.7).toFixed(2);
+
+            const pricePerKwBefore = 1.5; // DH
+            const pricePerKwAfter = 0.9; // DH
+            const financialGain = ((totalBefore * pricePerKwBefore) - (totalAfter * pricePerKwAfter)).toFixed(2);
+
+            const maxBefore = Math.max(...energyData.map(d => d.p_before));
+            const maxAfter = Math.max(...energyData.map(d => d.p_after));
+            const peakReduction = (maxBefore - maxAfter).toFixed(1);
+
+            const avgCosPhi_before = (energyData.reduce((sum, d) => sum + calculateCosPhi(d.p_before, d.q_before), 0) / energyData.length).toFixed(3);
+            const avgCosPhi_after = (energyData.reduce((sum, d) => sum + calculateCosPhi(d.p_after, d.q_after), 0) / energyData.length).toFixed(3);
+
+            return {
+                savings: savingsPercent,
+                peak: peakReduction,
+                cosPhi_before: avgCosPhi_before,
+                cosPhi_after: avgCosPhi_after,
+                totalBefore: totalBefore.toFixed(1),
+                totalAfter: totalAfter.toFixed(1),
+                maxBefore: maxBefore.toFixed(1),
+                maxAfter: maxAfter.toFixed(1),
+                co2Saved: co2Saved,
+                financialGain: financialGain,
+                totalKwhSaved: totalKwhSaved.toFixed(1)
+            };
+        }
+
+        // ========== UPDATE DASHBOARD ==========
+        function updateDashboard() {
+            const kpis = calculateKPIs();
+
+            document.getElementById('kpi-savings').textContent = kpis.savings + '%';
+            document.getElementById('kpi-peak').textContent = kpis.peak + ' kW';
+            document.getElementById('kpi-co2').textContent = kpis.co2Saved;
+            document.getElementById('kpi-financial').textContent = kpis.financialGain;
+
+            document.getElementById('table-consumption').textContent = kpis.savings + '%';
+            document.getElementById('table-peak').textContent = kpis.maxAfter + ' kW';
+            document.getElementById('table-pf').textContent = kpis.cosPhi_after;
+
+            const peakCompliance = parseFloat(kpis.maxAfter) <= THRESHOLDS[currentMode].powerLimit;
+            const pfCompliance = parseFloat(kpis.cosPhi_after) >= THRESHOLDS[currentMode].pfLimit;
+            
+            document.getElementById('peak-compliance').innerHTML = peakCompliance ? '<span class="checkmark">✓</span>' : '<span class="cross">✗</span>';
+            document.getElementById('pf-compliance').innerHTML = pfCompliance ? '<span class="checkmark">✓</span>' : '<span class="cross">✗</span>';
+
+            updateChart();
+            startSimulator();
+        }
+
+        // ========== CHART.JS VISUALIZATION ==========
+        function updateChart() {
+            const times = energyData.map(d => d.time);
+            const pBefore = energyData.map(d => d.p_before);
+            const pAfter = energyData.map(d => d.p_after);
+
+            const ctx = document.getElementById('energyChart').getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: times,
+                    datasets: [
+                        {
+                            label: 'Avant (Compteur Traditionnel)',
+                            data: pBefore,
+                            borderColor: '#f56565',
+                            backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f56565',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 6,
+                        },
+                        {
+                            label: 'Après (Compteur Intelligent)',
+                            data: pAfter,
+                            borderColor: '#48bb78',
+                            backgroundColor: 'rgba(72, 187, 120, 0.05)',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#48bb78',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#cbd5e0',
+                                font: { size: 12, weight: '600' },
+                                padding: 20,
+                                usePointStyle: true,
+                            },
+                            position: 'top',
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 32, 44, 0.9)',
+                            borderColor: '#38b2ac',
+                            borderWidth: 1,
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#cbd5e0',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                afterBody: function(context) {
+                                    if (context[0] && context[1]) {
+                                        const before = context[0].parsed.y;
+                                        const after = context[1].parsed.y;
+                                        const saved = (before - after).toFixed(1);
+                                        return `💡 Économisé : ${saved} kW`;
+                                    }
+                                }
+                            }
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#cbd5e0',
+                                font: { size: 11 },
+                            },
+                            grid: {
+                                color: 'rgba(74, 85, 104, 0.2)',
+                            },
+                        },
+                        y: {
+                            ticks: {
+                                color: '#cbd5e0',
+                                font: { size: 11 },
+                                callback: function(value) {
+                                    return value + ' kW';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(74, 85, 104, 0.2)',
+                            },
+                            beginAtZero: true,
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== LIVE SIMULATOR ==========
+        let simulatorInterval = null;
+
+        function startSimulator() {
+            if (simulatorInterval) clearInterval(simulatorInterval);
+
+            currentHourIndex = 0;
+            updateLiveDisplay();
+
+            simulatorInterval = setInterval(() => {
+                updateLiveDisplay();
+                currentHourIndex = (currentHourIndex + 1) % energyData.length;
+            }, 1000);
+        }
+
+        function updateLiveDisplay() {
+            const data = energyData[currentHourIndex];
+            const beforeVal = data.p_before.toFixed(1);
+            const afterVal = data.p_after.toFixed(1);
+            const savedVal = (data.p_before - data.p_after).toFixed(1);
+
+            document.getElementById('baseline-display').textContent = beforeVal + ' kW';
+            document.getElementById('baseline-time').textContent = data.time;
+
+            document.getElementById('optimized-display').textContent = afterVal + ' kW';
+            document.getElementById('optimized-time').textContent = data.time;
+
+            document.getElementById('savings-display').textContent = savedVal + ' kW';
+
+            const windowSize = 5;
+            const startIdx = Math.max(0, currentHourIndex - windowSize + 1);
+            const window = energyData.slice(startIdx, currentHourIndex + 1);
+            const maxVal = Math.max(...energyData.map(d => d.p_before));
+
+            const baselineHtml = window.map(d => 
+                `<div class="bar" style="height: ${(d.p_before / maxVal) * 100}%;"></div>`
+            ).join('');
+            document.getElementById('baseline-bars').innerHTML = baselineHtml;
+
+            const optimizedHtml = window.map(d => 
+                `<div class="bar" style="height: ${(d.p_after / maxVal) * 100}%; background: var(--accent-green);"></div>`
+            ).join('');
+            document.getElementById('optimized-bars').innerHTML = optimizedHtml;
+
+            const savingsHtml = window.map(d => 
+                `<div class="bar" style="height: ${((d.p_before - d.p_after) / maxVal) * 100}%; background: var(--accent-emerald);"></div>`
+            ).join('');
+            document.getElementById('savings-bars').innerHTML = savingsHtml;
+        }
+
+        // ========== ALARM CHECKING WITH MODE-SPECIFIC LOGIC ==========
+        function checkAlarms() {
+            const threshold = THRESHOLDS[currentMode].powerLimit;
+            const pfLimit = THRESHOLDS[currentMode].pfLimit;
+            alarmLog = [];
+
+            energyData.forEach((data, index) => {
+                const timeStr = data.time;
+                const hourMatch = timeStr.match(/^(\d{1,2}):/);
+                const hour = hourMatch ? parseInt(hourMatch[1]) : 0;
+
+                if (currentMode === 'building') {
+                    if (data.p_before > threshold) {
+                        alarmLog.push({
+                            time: new Date().toLocaleTimeString(),
+                            type: 'POWER_OVERLOAD',
+                            message: `⚠️ Puissance > ${threshold} kW à ${data.time}: ${data.p_before.toFixed(1)} kW`,
+                            severity: 'critical'
+                        });
+                    }
+
+                    const nightStartHour = THRESHOLDS.building.nightStartHour;
+                    const nightEndHour = THRESHOLDS.building.nightEndHour;
+                    
+                    if (hour >= nightStartHour && hour < nightEndHour) {
+                        if (data.p_before > data.p_after * 1.5) {
+                            alarmLog.push({
+                                time: new Date().toLocaleTimeString(),
+                                type: 'HVAC_WASTE',
+                                message: `💡 Surconsom. nuit détectée à ${data.time}: ${data.p_before.toFixed(1)} kW`,
+                                severity: 'warning'
+                            });
+                        }
+                    }
+                }
+                
+                if (currentMode === 'industry') {
+                    if (data.p_before > threshold) {
+                        alarmLog.push({
+                            time: new Date().toLocaleTimeString(),
+                            type: 'POWER_OVERLOAD',
+                            message: `⚠️ Puissance > ${threshold} kW à ${data.time}: ${data.p_before.toFixed(1)} kW`,
+                            severity: 'critical'
+                        });
+                    }
+
+                    const cosPhi = calculateCosPhi(data.p_before, data.q_before);
+                    if (cosPhi < pfLimit) {
+                        alarmLog.push({
+                            time: new Date().toLocaleTimeString(),
+                            type: 'POWER_FACTOR_LOW',
+                            message: `⚡ Risque pénalité à ${data.time}: Cos Φ = ${cosPhi.toFixed(3)} (< ${pfLimit})`,
+                            severity: 'warning'
+                        });
+                    }
+                }
+            });
+
+            updateAlarmBanner();
+            updateNotificationBadge();
+        }
+
+        function updateAlarmBanner() {
+            const banner = document.getElementById('alarmBanner');
+            if (alarmLog.length > 0) {
+                const critical = alarmLog.find(a => a.severity === 'critical');
+                if (critical) {
+                    document.getElementById('alarmMessage').textContent = critical.message;
+                    banner.classList.add('active');
+                } else {
+                    banner.classList.remove('active');
+                }
+            } else {
+                banner.classList.remove('active');
+            }
+        }
+
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notificationBadge');
+            if (alarmLog.length > 0) {
+                badge.textContent = alarmLog.length;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // ========== NOTIFICATION CENTER ==========
+        document.getElementById('notificationBell').addEventListener('click', function() {
+            document.getElementById('notificationModal').classList.add('active');
+            updateNotificationList();
+        });
+
+        function closeNotificationModal() {
+            document.getElementById('notificationModal').classList.remove('active');
+        }
+
+        function updateNotificationList() {
+            const list = document.getElementById('notificationList');
+            if (alarmLog.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary);">Aucune alerte pour le moment</p>';
+                return;
+            }
+
+            list.innerHTML = alarmLog.map(alert => `
+                <div class="alert-item">
+                    <div class="alert-time">${alert.time}</div>
+                    <div class="alert-text"><strong>${alert.type}</strong></div>
+                    <div class="alert-text">${alert.message}</div>
+                </div>
+            `).join('');
+
+            if (!document.getElementById('sendAlertBtn') && alarmLog.length > 0) {
+                const btn = document.createElement('button');
+                btn.id = 'sendAlertBtn';
+                btn.className = 'btn btn-warning';
+                btn.style.marginTop = '1.5rem';
+                btn.style.width = '100%';
+                btn.textContent = '📧 Envoyer Alerte';
+                btn.onclick = sendEmailAlert;
+                list.parentElement.appendChild(btn);
+            }
+        }
+
+        // ========== EMAIL ALERT WITH EMAILJS (CORRECTED) ==========
+        function sendEmailAlert() {
+            Swal.fire({
+                title: 'Envoyer Alerte',
+                input: 'email',
+                inputLabel: 'Adresse Email du Destinataire',
+                inputPlaceholder: 'votre.email@exemple.com',
+                inputValue: 'amineafennane@gmail.com',
+                showCancelButton: true,
+                confirmButtonText: 'Envoyer',
+                cancelButtonText: 'Annuler',
+                background: '#2d3748',
+                color: '#cbd5e0',
+                confirmButtonColor: '#48bb78',
+                cancelButtonColor: '#718096',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                preConfirm: (email) => {
+                    if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                        Swal.showValidationMessage('Veuillez entrer une adresse email valide');
+                        return false;
+                    }
+                    return email;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const kpis = calculateKPIs();
+                    const modeLabel = currentMode === 'building' ? 'Bâtiment' : 'Industrie';
+                    
+                    const templateParams = {
+                        to_email: result.value,
+                        message: `Dépassement de puissance détecté (Mode ${modeLabel}).`,
+                        savings_dh: kpis.financialGain,
+                        co2_saved: kpis.co2Saved
+                    };
+
+                    Swal.fire({
+                        title: 'Envoi en cours...',
+                        text: 'Veuillez patienter',
+                        icon: 'info',
+                        background: '#2d3748',
+                        color: '#cbd5e0',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.templateID, templateParams)
+                        .then((response) => {
+                            console.log('✅ Email sent successfully:', response);
+                            Swal.fire({
+                                title: 'Succès !',
+                                html: `✅ Alerte envoyée à<br><strong>${result.value}</strong><br><br>
+                                        <strong>Détails :</strong><br>
+                                        Mode: ${modeLabel}<br>
+                                        Gain Financier: ${kpis.financialGain} DH<br>
+                                        CO₂ Économisé: ${kpis.co2Saved} kg`,
+                                icon: 'success',
+                                background: '#2d3748',
+                                color: '#cbd5e0',
+                                confirmButtonColor: '#48bb78'
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('❌ EmailJS Error:', error);
+                            Swal.fire({
+                                title: 'Erreur !',
+                                text: `Échec de l'envoi: ${error.text || error.message}`,
+                                icon: 'error',
+                                background: '#2d3748',
+                                color: '#cbd5e0',
+                                confirmButtonColor: '#f56565'
+                            });
+                        });
+                }
+            });
+        }
+
+        // ========== PDF REPORT GENERATION ==========
+        document.getElementById('reportBtn').addEventListener('click', function() {
+            if (energyData.length === 0) {
+                Swal.fire({
+                    title: 'Aucune Donnée',
+                    text: 'Veuillez d\'abord charger des données pour générer un rapport',
+                    icon: 'warning',
+                    background: '#2d3748',
+                    color: '#cbd5e0',
+                    confirmButtonColor: '#ed8936'
+                });
+                return;
+            }
+
+            generatePDFReport();
+        });
+
+        function generatePDFReport() {
+            const { jsPDF } = window.jspdf;
+            
+            Swal.fire({
+                title: 'Génération du rapport...',
+                text: 'Capture du graphique en cours...',
+                icon: 'info',
+                background: '#2d3748',
+                color: '#cbd5e0',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const chartElement = document.getElementById('energyChart').parentElement;
+            
+            html2canvas(chartElement, {
+                scale: 2,
+                backgroundColor: '#2d3748',
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const chartImage = canvas.toDataURL('image/png');
+                
+                const doc = new jsPDF();
+                const kpis = calculateKPIs();
+                const today = new Date().toLocaleDateString('fr-FR');
+                const modeTitle = currentMode === 'building' ? 'Bâtiment' : 'Industrie';
+                const pageHeight = doc.internal.pageSize.height;
+                const pageWidth = doc.internal.pageSize.width;
+                let yPos = 15;
+
+                // Title
+                doc.setFillColor(45, 55, 72);
+                doc.rect(15, 10, pageWidth - 30, 25, 'F');
+                
+                doc.setFontSize(18);
+                doc.setTextColor(72, 187, 120);
+                doc.setFont(undefined, 'bold');
+                doc.text(`Rapport d'Audit Énergétique`, 20, 22);
+                doc.text(`Mode: ${modeTitle}`, 20, 32);
+
+                yPos = 40;
+
+                // Date and metadata
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Date du rapport: ${today}`, 20, yPos);
+                doc.text(`Nombre de points de données: ${energyData.length}`, 20, yPos + 7);
+                
+                yPos += 20;
+
+                // Section A: KPIs
+                doc.setFontSize(14);
+                doc.setTextColor(0);
+                doc.setFont(undefined, 'bold');
+                doc.text('A. Synthèse des Résultats (KPIs)', 20, yPos);
+                
+                yPos += 12;
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(51, 51, 51);
+                
+                doc.text(`• Énergie Totale Économisée: ${kpis.savings}%`, 25, yPos);
+                yPos += 8;
+                doc.text(`• Réduction de la Puissance Appelée: ${kpis.peak} kW`, 25, yPos);
+                yPos += 8;
+                doc.text(`• Impact CO₂: ${kpis.co2Saved} kg CO₂ évitées`, 25, yPos);
+                yPos += 8;
+                doc.text(`• Gain Financier: ${kpis.financialGain} DH`, 25, yPos);
+                yPos += 8;
+                doc.text(`• Facteur de Puissance (avant): ${kpis.cosPhi_before}`, 25, yPos);
+                yPos += 8;
+                doc.text(`• Facteur de Puissance (après): ${kpis.cosPhi_after}`, 25, yPos);
+
+                yPos += 15;
+
+                // Section B: Chart
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(0);
+                doc.text('B. Analyse Visuelle: Profil Énergétique 24h', 20, yPos);
+
+                yPos += 10;
+
+                const imgWidth = pageWidth - 40;
+                const imgHeight = (imgWidth * canvas.height) / canvas.width;
+                
+                if (yPos + imgHeight > pageHeight - 20) {
+                    doc.addPage();
+                    yPos = 15;
+                }
+
+                doc.addImage(chartImage, 'PNG', 20, yPos, imgWidth, imgHeight);
+                yPos += imgHeight + 10;
+
+                if (yPos > pageHeight - 80) {
+                    doc.addPage();
+                    yPos = 15;
+                }
+
+                // Section C: Analysis and Recommendations
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(0);
+                doc.text('C. Analyse Technique & Consignations', 20, yPos);
+
+                yPos += 12;
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(51, 51, 51);
+
+                let analysisText = '';
+                let recommendationsText = '';
+
+                if (currentMode === 'building') {
+                    analysisText = 'Analyse : Une consommation excessive a été détectée durant les heures d\'inoccupation (Nuit). Les systèmes de climatisation et de chauffage fonctionnent de manière inefficace durant les périodes de faible occupation, entraînant une augmentation inutile de la consommation énergétique.';
+                    
+                    recommendationsText = 'Consignation : Optimisation CVC nuit requise. Vérifier la programmation de la GTC (Gestion Technique Centralisée) et installer des détecteurs de présence dans les zones communes. Il est recommandé de mettre en place une stratégie de régulation adaptée au profil d\'occupation du bâtiment.';
+                } else {
+                    analysisText = 'Analyse : Le facteur de puissance est critique (< 0.93) et des pics de démarrage importants ont été relevés. Cette situation entraîne des pénalités financières importantes et une mauvaise utilisation de l\'infrastructure électrique. L\'énergie réactive consommée dépasse les seuils de tolérance définis par le gestionnaire de réseau.';
+                    
+                    recommendationsText = 'Consignation : Installer batterie condensateurs. Prévoir l\'installation de batteries de condensateurs pour compenser l\'énergie réactive et installer des démarreurs progressifs sur les moteurs principaux. Une étude approfondie des charges non-linéaires et de leur harmonique est recommandée.';
+                }
+
+                const analysisLines = doc.splitTextToSize(analysisText, pageWidth - 40);
+                doc.text(analysisLines, 20, yPos);
+                yPos += (analysisLines.length * 5) + 8;
+
+                doc.setFont(undefined, 'bold');
+                doc.text('Recommandations :', 20, yPos);
+                yPos += 7;
+
+                doc.setFont(undefined, 'normal');
+                const recLines = doc.splitTextToSize(recommendationsText, pageWidth - 40);
+                doc.text(recLines, 20, yPos);
+
+                // Footer
+                yPos = pageHeight - 10;
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.setFont(undefined, 'normal');
+                doc.text('Rapport d\'Audit Énergétique V3.0 | Système Professionnel | Confidentiel', 20, yPos);
+
+                const fileName = `Rapport_Audit_Energetique_${modeTitle}_${today.replace(/\//g, '-')}.pdf`;
+                doc.save(fileName);
+
+                Swal.fire({
+                    title: 'Succès !',
+                    text: `Rapport d'audit pour le mode ${modeTitle} téléchargé avec succès`,
+                    icon: 'success',
+                    background: '#2d3748',
+                    color: '#cbd5e0',
+                    confirmButtonColor: '#48bb78'
+                });
+
+            }).catch(error => {
+                console.error('Error capturing chart:', error);
+                Swal.fire({
+                    title: 'Erreur !',
+                    text: 'Une erreur est survenue lors de la capture du graphique',
+                    icon: 'error',
+                    background: '#2d3748',
+                    color: '#cbd5e0',
+                    confirmButtonColor: '#f56565'
+                });
+            });
+        }
+
+        // Close modal on outside click
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('notificationModal');
+            if (event.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
